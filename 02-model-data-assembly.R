@@ -4,10 +4,17 @@ library(tidyverse)
 ref_rgx <- "^[:alnum:]+(?=_)"
 
 # read pre-processed climate data and enframe
-climdata <- read_rds("climate-data/study-climdata.rds") %>%
+climdata <- read_rds("spatial-data/study-climdata.rds") %>%
   enframe(name = "clim_fname",
           value = "climdata") %>%
   mutate(ref_no = str_extract(clim_fname, ref_rgx), .before = "climdata")
+
+# read pre-processed sand fraction data and join to climate data
+sanddata <- read_rds("spatial-data/study-sanddata.rds") %>%
+  enframe(name = "clim_fname",
+          value = "sand_frac")
+
+climdata <- left_join(climdata, sanddata, by = "clim_fname")
 
 # read in crop data
 fnames <- dir("raw-data/crop")
@@ -42,7 +49,7 @@ mandata <- enframe(mandata, name = "man_fname", value = "mandata") %>%
 studydata <- full_join(cropdata, mandata, by = "crop_fname")
 sum(studydata$cropdata %>% map_lgl(is_null)) # no missing rows in cropdata
 studydata <- left_join(studydata, climdata, by = "ref_no") %>%
-  select(crop_fname, man_fname, clim_fname, ref_no, is_control, cropdata, mandata, climdata)
+  select(crop_fname, man_fname, clim_fname, ref_no, is_control, cropdata, mandata, climdata, sand_frac)
 
 # write out
 write_rds(studydata, "model-data/model-input-data-raw.rds")
