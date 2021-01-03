@@ -1,4 +1,5 @@
 library(tidyverse)
+#devtools::install_github("oj-sykes92/soilc.ipcc")
 library(soilc.ipcc)
 
 # read in collated raw data
