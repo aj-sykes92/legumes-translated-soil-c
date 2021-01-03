@@ -36,6 +36,4 @@ modeldata %>%
        y = expression("Soil C stocks (tonnes C ha"^{-1}*")")) +
   theme_classic()
 
-ggsave("model-output-summaries/faceted-trajectories-plot.png", height = 6, width = 8)
-
-
+ggsave("model-output-summaries/faceted-trajectories-plot.png", height = 12, width = 20)
