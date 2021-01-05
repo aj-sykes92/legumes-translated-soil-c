@@ -171,5 +171,21 @@ modeldata <- modeldata %>%
       )
   )
 
+# pad out name strings and arrange (necessary for plotting in order)
+# also modify ref_no so it's unique to control-treatment pair
+modeldata <- modeldata %>%
+  mutate(control_name = ifelse(str_detect(control_name, "^[:digit:]{1}_"),
+                               paste0(0, control_name),
+                               control_name),
+         treatment_name = ifelse(str_detect(treatment_name, "^[:digit:]{1}_"),
+                                 paste0(0, treatment_name),
+                                 treatment_name)) %>%
+  arrange(control_name, treatment_name) %>%
+  group_by(control_name) %>%
+  mutate(treatment = 1:n()) %>%
+  ungroup() %>%
+  mutate(ref_no = paste0(ref_no, "_t", treatment)) %>%
+  select(-treatment)
+
 # write out results
 write_rds(modeldata, "model-data/model-output-data.rds")
