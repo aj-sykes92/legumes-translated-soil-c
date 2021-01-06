@@ -1,6 +1,5 @@
-
-library(raster)
 library(rgdal)
+library(raster)
 library(tidyverse)
 
 # read in cru climate data
