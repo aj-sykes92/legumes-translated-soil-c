@@ -5,11 +5,18 @@ library(soilc.ipcc)
 # read in collated raw data
 rawdata <- read_rds("model-data/model-input-data-raw.rds")
 
-# extend crop data to n_years
+# extend crop and manure data to n_years
 n_years = 500
 repno <- ceiling(n_years / min(map_int(rawdata$cropdata, nrow)))
 rawdata <- rawdata %>%
   mutate(
+    mandata = map2(mandata, cropdata,
+                   ~if(!is_null(.x)) {
+                     .x %>%
+                     slice(rep(1:nrow(.y), times = repno)) %>%
+                     slice(1:n_years)
+                   }
+                   ),
     cropdata = map(cropdata,
                     ~.x %>%
                       slice(rep(1:nrow(.x), times = repno)) %>%
