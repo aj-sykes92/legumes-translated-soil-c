@@ -1,7 +1,7 @@
 ---
-title: "Legumes Translated Soil Carbon Modelling"
+title: "*Legumes Translated* soil carbon modelling -- project handbook"
 author: "Dr Alasdair Sykes"
-date: "03/01/2021"
+date: "05/01/2021"
 output: github_document
 ---
 
@@ -36,6 +36,147 @@ Spatial data used in the modelling process is (1) climate data from the CRU proj
 * **raw-data** Data directory containing raw spatial data, raw study data as supplied, and data translation scripts.
 
 * **spatial-data** Data directory containing processed spatial data.
+
+## Methods in brief
+
+For each study site, the spatial data was cropped and masked against the relevant NUTS level 2 shapefile, and arithmetic mean was calculated for mean monthly temperature, precipitation, potential evapotranspiration, and soil sand fraction. The spatial climate data represented 20-year monthly mean conditions. These conditions were repeated for the duration of the model runs.
+
+Data referencing crop management and manure application practices was taken as supplied and matched up to analogous crop and manure categories in the relevant IPCC (2019) methodology. The `soilc.ipcc` package was used to build model inputs accordingly, and to compute the model runs.
+
+For each study site and control-treatment pair (control = no legumes in the rotation, treatment = legumes in the rotation) the model was run three times; once for equilibrium control conditions, once for equilibrium treatment conditions, and once for a transition from control to treatment conditions. For each model run, the model was run in for a period of 50 years with averaged conditions (climate, soil and organic inputs) followed by a period of 500 years in the relevant rotation. For the transition from control to treatment, the model was run in in mean control conditions, calculated for year 1--50 in the control rotation, and transitioned to treatment conditions for years 51--500.
+
+Model results were summarised to calculate a mean soil carbon stock for the final 50 years of equilibrium conditions in control and treatment rotations, and to find a 20- and 50-year mean carbon stock change post transition in the transitional run.
+
+## Results and analysis
+
+Results from the model transitional runs are presented in Fig 1.
+
+```{r read-in, include = FALSE}
+library(tidyverse)
+# read in model outputs
+modeldata <- read_rds("model-data/model-output-data.rds")
+summarydata <- read_csv("model-output-summaries/model-summary-stats.csv")
+```
+
+```{r traj-plot, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 10,fig.height = 12, fig.align = "center", fig.cap = "**Fig. 1.** C stock results from the model transitional runs"}
+modeldata %>%
+  select(-controldata, -treatmentdata) %>%
+  unnest(combdata) %>%
+  filter(year <= 200) %>%
+  ggplot(aes(x = year, y = total_y)) +
+  geom_line(colour = "darkred", alpha = 0.3) +
+  geom_smooth(size = 1, colour = "black") +
+  geom_vline(xintercept = 50, colour = "darkgrey", alpha = 0.5) +
+  facet_wrap(~ control_name + treatment_name, nrow = 7, scales = "free") +
+  labs(x = "Year",
+       y = expression("Soil C stocks (tonnes C ha"^{-1}*")")) +
+  theme_classic()
+```
+
+The summary statistics for the model runs are as follows:
+
+```{r summary-table, echo = FALSE, warning = FALSE, message = FALSE, fig.cap = "Table 1"}
+summarydata %>%
+  select(-ref_no, -co2_seq_20y_tha, -co2_seq_50y_tha) %>%
+  knitr::kable(digits = 2,
+               col.names = c("Control", "Treatment",
+                             "Control stocks (tonnes C ha<sup>-1</sup>)",
+                             "Treatment stocks (tonnes C ha<sup>-1</sup>)",
+                             "Annual stock change, 20-year (tonnes C ha<sup>-1</sup>)",
+                             "Annual stock change, 50-year (tonnes C ha<sup>-1</sup>)"))
+```
+
+Some analysis has been performed in order to determine the driving factors behind C stock response to the change in rotations. Initially, correlation between the key model input and output variables for treatment (legume) rotations was computed (Fig. 2).
+
+```{r corrplot, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center", fig.cap = "**Fig. 2.** Correlation plot for treatment rotation variables. Variabile `total_y` indicates the size of the total soil C pool in tonnes per hectare."}
+# correlation plot for treatment rotations
+cor_treatment <- modeldata %>%
+  select(ref_no, treatmentdata) %>%
+  unnest(treatmentdata) %>%
+  select(c_input, n_frac:k_p, total_y) %>%
+  cor(method = "spearman")
+
+cor_treatment %>%
+  ggcorrplot::ggcorrplot(method = "circle") +
+  scale_fill_viridis_c()
+```
+
+While this plot shows the driving factors behind equilbrium soil C for the treatment variables, these treatments are also following some potentially quite different control rotations. To further interrogate the data, a similar correlation-based approach was taken, with the focus on the net difference (`treatment - control`) between the model input and output variables. Note that some environmental variables are identical for control and treatment, and that therefore differential correlation was not possible to compute.
+
+```{r diff-corrplot, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center", fig.cap = "**Fig. 3.** Correlation plot for difference in treatment vs. control rotation variables."}
+# fractional difference between model input variables
+modeldata <- modeldata %>%
+  mutate(var_diff = map2(controldata, treatmentdata,
+         function(c, t) {
+           c <- c %>% select_if(is.numeric)
+           t <- t %>% select_if(is.numeric)
+           c <- c %>% summarise_all(mean)
+           t <- t %>% summarise_all(mean)
+           var_diff <- (t - c)
+           return(as_tibble(var_diff))
+         }),
+         var_diff_frac = map2(controldata, treatmentdata,
+                        function(c, t) {
+                          c <- c %>% select_if(is.numeric)
+                          t <- t %>% select_if(is.numeric)
+                          c <- c %>% summarise_all(mean)
+                          t <- t %>% summarise_all(mean)
+                          var_diff_frac <- (t - c) / c
+                          return(as_tibble(var_diff_frac))
+                        })
+         )
+
+var_diff <- left_join(
+  summarydata %>%
+    mutate(is_negative = annual_stock_change_50y_tha < 0) %>%
+    select(ref_no, is_negative, stock_change = annual_stock_change_50y_tha),
+  modeldata %>%
+    select(ref_no, var_diff) %>%
+    unnest(var_diff),
+  by = "ref_no"
+  )
+
+var_diff_frac <- left_join(
+  summarydata %>%
+    mutate(is_negative = annual_stock_change_50y_tha < 0) %>%
+    select(ref_no, is_negative, stock_change = annual_stock_change_50y_tha),
+  modeldata %>%
+    select(ref_no, var_diff_frac) %>%
+    unnest(var_diff_frac),
+  by = "ref_no"
+)
+
+# correlation plot of differences
+var_diff %>%
+  #select(c_input, n_frac, lignin_frac, tillfac:k_s, total_y) %>%
+  select(c_input, n_frac:k_p, total_y) %>%
+  cor(method = "spearman") %>%
+  ggcorrplot::ggcorrplot(method = "circle") +
+  scale_fill_viridis_c()
+```
+
+Interpretation of Fig. 3 suggests that differences in equilibrium carbon stocks are largely driven by differences in total carbon inputs `c_input`, differences in nitrogen and lignin fractions `n_frac` and `lig_frac`, and to a lesser extent differences in tillage practices `till_fac`. Resulting calculated model variables `alpha`, `k_a` and `k_s` carry this through to the final `total_y` (tonnes C ha^-1^) estimate.
+
+Fig. 4 shows the major differences in model variables where results following transition to treatment rotations were positive vs. negative for resulting soil carbon stock changes.
+
+```{r diff-boxplot, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center", fig.cap = "**Fig. 4.** Boxplot showing differences between model variables for positive and negative soil carbon responses."}
+var_diff_frac %>%
+  mutate(response = ifelse(is_negative, "Loss of soil C", "Gain of soil C")) %>%
+  select(ref_no, response, c_input, n_frac, lignin_frac, tillfac:k_s) %>%
+  gather(-ref_no, -response, key = "var", value = "frac_diff") %>%
+  filter(frac_diff <= quantile(frac_diff, 0.95),
+         frac_diff >= quantile(frac_diff, 0.05)) %>%
+  ggplot(aes(x = var, y = frac_diff)) +
+  geom_boxplot(fill = "darkred", alpha = 0.7, outlier.shape = NA) +
+  geom_hline(yintercept = 0) +
+  facet_wrap(~response) +
+  labs(x = "Variable name",
+       y = "Fractional difference in model inputs [(treatment - control) / control] ") +
+  coord_flip() +
+  theme_classic()
+```
+
+Interpretation of Fig. 4 confirms the indication of the correlation plots, but suggests the loss of soil C, where present, is primarily due to differences in organic matter inputs to the soil from the different rotations.
 
 ## Contact
 
