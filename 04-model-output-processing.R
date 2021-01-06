@@ -3,12 +3,6 @@ library(tidyverse)
 # read in model outputs
 modeldata <- read_rds("model-data/model-output-data.rds")
 
-# pad out ref_no strings and arrange
-modeldata <- modeldata %>%
-  mutate(control_name = str_pad(control_name, 7, "left", "0"),
-         treatment_name = str_pad(treatment_name, 7, "left", "0")) %>%
-  arrange(control_name, treatment_name)
-
 # df with model output summary statistics
 modelsummary <- modeldata %>%
   mutate(eq_c_stock_control_tha = map_dbl(controldata, ~mean(.x$total_y[450:500])),
