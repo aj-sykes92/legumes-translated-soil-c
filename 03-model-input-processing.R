@@ -32,13 +32,13 @@ crop_trans <- rawdata %>%
   distinct() %>%
   arrange(crop_type)
 
-crop_trans = crop_trans %>%
-  mutate(trans = c("alfalfa", "beans_and_pulses", "beans_and_pulses", "n_fixing_forage", "n_fixing_forage",
+crop_trans <- crop_trans %>%
+  mutate(trans = c("alfalfa", "beans_and_pulses", "beans_and_pulses", "beans_and_pulses", "beans_and_pulses",
                    "grass_clover_mix", "grass", "n_fixing_forage", "maize", "n_fixing_forage",
                    "n_fixing_forage", "maize", "soybean", "barley", "barley",
-                   "barley", "oats", "tubers", "non_n_fixing_forage", "rye",
-                   "barley", "barley", "oats", "oats", "non_n_fixing_forage",
-                   "non_n_fixing_forage", "rye", "winter_wheat"))
+                   "barley", "oats", "tubers", "generic_crops_nos", "grains_nos",
+                   "barley", "barley", "oats", "oats", "grains_nos",
+                   "grains_nos", "grains_nos", "winter_wheat"))
 
 # manure entry translation
 man_trans <- rawdata %>%
@@ -59,12 +59,39 @@ rawdata <- rawdata %>%
     mandata = map_if(mandata, ~!is_null(.x), ~left_join(.x, man_trans, by = "man_type"))
     )
 
+# add in residue removal estimates based on information from project
+# utilises some functionality from the soilc.ipcc pacakge
+get_res_remove <- function(df, straw_yield) {
+  df %>%
+    mutate(slope = map_dbl(trans, ~soilc.ipcc::crop_agrc[[.x]]$slope),
+           intercept = map_dbl(trans, ~soilc.ipcc::crop_agrc[[.x]]$intercept),
+           dry = map_dbl(trans, ~soilc.ipcc::crop_bgrc[[.x]]$dry),
+           agr = yield_tha * slope + intercept / dry, # calculation in fresh weight
+           tha_remove = rep(straw_yield, length.out = 500),
+           frac_remove = tha_remove / yield_tha,
+           frac_remove = ifelse(frac_remove > 1, 1, frac_remove),
+           frac_remove = ifelse(frac_remove < 0, 0, frac_remove)
+    ) %>%
+    select(-(slope:tha_remove))
+}
+
+# take care of individual cases with residue removal
+rawdata$cropdata[[21]] <- get_res_remove(rawdata$cropdata[[21]], c(0, 4.7, 2.9, 4.1)) # scotland, no legumes
+rawdata$cropdata[[22]] <- get_res_remove(rawdata$cropdata[[22]], c(0, 4.1, 4.7, 0, 4.35)) # scotland, legumes 1
+rawdata$cropdata[[23]] <- get_res_remove(rawdata$cropdata[[23]], c(0, 4.1, 4.7, 0, 3.1)) # scotland, legumes 2
+rawdata$cropdata[[31]] <- get_res_remove(rawdata$cropdata[[31]], c(3.3, 3.2, 3.5, 3.2, 0, 4.1)) # ireland, no legumes
+rawdata$cropdata[[32]] <- get_res_remove(rawdata$cropdata[[32]], c(3.3, 3.2, 3.5, 0, 3.5)) # ireland, legumes
+
+# no residue removal for anybody else
+rawdata <- rawdata %>%
+  mutate(cropdata = map(cropdata, ~mutate(.x, frac_remove = ifelse(is.na(frac_remove), 0, frac_remove))))
+
 # create model organic matter inputs
 crop_input <- map(
   rawdata$cropdata,
   ~add_crop(crop = .x$trans,
             yield_tha = .x$yield_tha,
-            frac_remove = 0.6,
+            frac_remove = .x$frac_remove,
             frac_renew = 1)
 )
 

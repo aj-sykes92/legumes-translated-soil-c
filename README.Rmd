@@ -27,6 +27,8 @@ Spatial data used in the modelling process is (1) climate data from the CRU proj
 
 * `04-model-output-processing.R` Summarisation of the model outputs into summary datasets and plots.
 
+* `05-model-output-analysis.R` Exploratory analysis primarily aimed at drawing out the driving factors behind C stock differences between treatment and control rotations.
+
 ### Subdirectories
 
 * **model-data** Data directory containing model input and output datasets.
