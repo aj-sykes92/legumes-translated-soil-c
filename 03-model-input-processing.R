@@ -60,7 +60,7 @@ rawdata <- rawdata %>%
     )
 
 # add in residue removal estimates based on information from project
-# utilises some functionality from the soilc.ipcc pacakge
+# utilises some functionality from the soilc.ipcc package
 get_res_remove <- function(df, straw_yield) {
   df %>%
     mutate(slope = map_dbl(trans, ~soilc.ipcc::crop_agrc[[.x]]$slope),
@@ -79,8 +79,10 @@ get_res_remove <- function(df, straw_yield) {
 rawdata$cropdata[[21]] <- get_res_remove(rawdata$cropdata[[21]], c(0, 4.7, 2.9, 4.1)) # scotland, no legumes
 rawdata$cropdata[[22]] <- get_res_remove(rawdata$cropdata[[22]], c(0, 4.1, 4.7, 0, 4.35)) # scotland, legumes 1
 rawdata$cropdata[[23]] <- get_res_remove(rawdata$cropdata[[23]], c(0, 4.1, 4.7, 0, 3.1)) # scotland, legumes 2
-rawdata$cropdata[[31]] <- get_res_remove(rawdata$cropdata[[31]], c(3.3, 3.2, 3.5, 3.2, 0, 4.1)) # ireland, no legumes
-rawdata$cropdata[[32]] <- get_res_remove(rawdata$cropdata[[32]], c(3.3, 3.2, 3.5, 0, 3.5)) # ireland, legumes
+rawdata$cropdata[[31]] <- get_res_remove(rawdata$cropdata[[31]], c(3.3, 3.2, 3.5, 3.2, 0, 4.1)) # ireland a, no legumes
+rawdata$cropdata[[32]] <- get_res_remove(rawdata$cropdata[[32]], c(3.3, 3.2, 3.5, 0, 3.5)) # ireland a, legumes
+rawdata$cropdata[[33]] <- get_res_remove(rawdata$cropdata[[33]], c(3.3, 3.2, 3.3, 3.3, 3.3)) # ireland b, no legumes
+rawdata$cropdata[[34]] <- get_res_remove(rawdata$cropdata[[34]], c(3.3, 0, 3.2, 3.3, 3.3)) # ireland b, legumes
 
 # no residue removal for anybody else
 rawdata <- rawdata %>%

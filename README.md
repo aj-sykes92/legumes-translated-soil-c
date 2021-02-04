@@ -49,6 +49,10 @@ based on NUTS 2017 Level 2 data, with corresponding shapefiles available
   - `04-model-output-processing.R` Summarisation of the model outputs
     into summary datasets and plots.
 
+  - `05-model-output-analysis.R` Exploratory analysis primarily aimed at
+    drawing out the driving factors behind C stock differences between
+    treatment and control rotations.
+
 ### Subdirectories
 
   - **model-data** Data directory containing model input and output
@@ -140,8 +144,8 @@ The summary statistics for the model runs are as follows:
 | 18\_-leg  | 18\_+leg4  |                                    100.25 |                                       96.09 |                                                  \-0.14 |                                                  \-0.06 |
 | 18\_-leg  | 18\_+leg5  |                                    100.25 |                                       45.49 |                                                  \-0.47 |                                                  \-0.29 |
 | 18\_-leg  | 18\_+leg6  |                                    100.25 |                                      104.99 |                                                  \-0.09 |                                                  \-0.02 |
-| 19\_-leg  | 19\_+leg1  |                                     55.94 |                                       60.34 |                                                    0.07 |                                                    0.04 |
-| 19\_-leg  | 19\_+leg2  |                                     55.94 |                                       49.81 |                                                  \-0.03 |                                                  \-0.02 |
+| 19a\_-leg | 19a\_+leg  |                                     55.94 |                                       60.34 |                                                    0.07 |                                                    0.04 |
+| 19b\_-leg | 19b\_+leg  |                                     34.84 |                                       36.91 |                                                    0.01 |                                                    0.01 |
 | 20\_-leg  | 20\_+leg   |                                     77.66 |                                       56.30 |                                                  \-0.21 |                                                  \-0.14 |
 
 Some analysis has been performed in order to determine the driving
