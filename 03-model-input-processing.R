@@ -103,6 +103,9 @@ man_input <- map(
               n_rate = .x$man_nrate)
 )
 
+# generate intermediate outputs (skims off data from this stage and outputs to separate subdir)
+source("intermediate-data/intermediate-output-creater.R")
+
 # build model data
 # warnings are where manure data is null
 modeldata <- rawdata %>%

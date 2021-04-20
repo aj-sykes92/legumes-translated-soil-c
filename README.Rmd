@@ -39,6 +39,8 @@ Spatial data used in the modelling process is (1) climate data from the CRU proj
 
 * **spatial-data** Data directory containing processed spatial data.
 
+* **intermediate-data** Output data directory containing human-readable combined raw and model input data files in .csv format. Not used in analysis.
+
 ## Methods in brief
 
 For each study site, the spatial data was cropped and masked against the relevant NUTS level 2 shapefile, and arithmetic mean was calculated for mean monthly temperature, precipitation, potential evapotranspiration, and soil sand fraction. The spatial climate data represented 20-year monthly mean conditions. These conditions were repeated for the duration of the model runs.
@@ -179,6 +181,8 @@ var_diff_frac %>%
 ```
 
 Interpretation of Fig. 4 confirms the indication of the correlation plots, but suggests the loss of soil C, where present, is primarily due to differences in organic matter inputs to the soil from the different rotations.
+
+To aid further interpretation/analysis of the model results, an intermediate data directory has been added (`intermediate-data/`) which contains human readable combined raw and model input data files.
 
 ## Contact
 

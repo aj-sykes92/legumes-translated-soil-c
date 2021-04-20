@@ -1,7 +1,7 @@
 *Legumes Translated* soil carbon modelling – project handbook
 ================
 Dr Alasdair Sykes
-2021-02-04
+2021-04-20
 
 ## Overview
 
@@ -65,6 +65,10 @@ based on NUTS 2017 Level 2 data, with corresponding shapefiles available
     data as supplied, and data translation scripts.
 
   - **spatial-data** Data directory containing processed spatial data.
+
+  - **intermediate-data** Output data directory containing
+    human-readable combined raw and model input data files in .csv
+    format. Not used in analysis.
 
 ## Methods in brief
 
@@ -218,6 +222,10 @@ Interpretation of Fig. 4 confirms the indication of the correlation
 plots, but suggests the loss of soil C, where present, is primarily due
 to differences in organic matter inputs to the soil from the different
 rotations.
+
+To aid further interpretation/analysis of the model results, an
+intermediate data directory has been added (`intermediate-data/`) which
+contains human readable combined raw and model input data files.
 
 ## Contact
 
